@@ -1,12 +1,12 @@
 /**
  *
- * "A rail yard receives trains in a specific arrival order.
+ * A rail yard receives trains in a specific arrival order.
  * Trains can be temporarily held in a siding track that behaves like a stack (Last In, First Out).
  * Given an arrival sequence and departure sequence, determine whether the departure sequence is possible."
  *
  * Arrival:   T1 T2 T3
  * Departure: T2 T3 T1
- * Vaid case
+ * Valid case
  *
  * Similar to LeetCode Problem 946
  * Time Complexity: O(n)

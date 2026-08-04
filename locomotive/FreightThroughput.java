@@ -21,7 +21,7 @@ public class FreightThroughput {
                     && throughput[i] > throughput[stack.peek()]) {
 
                 int prev = stack.pop();
-                result[prev] = current - prev;
+                result[prev] = i - prev;
             }
 
             stack.push(i);

@@ -25,6 +25,7 @@ public class RailNetwork {
 
         Map<String, List<String>> graph = new HashMap<>();
 
+        // undirected adjacency list
         for (List<String> connection : connections) {
             String terminal1 = connection.get(0);
             String terminal2 = connection.get(1);
@@ -58,6 +59,7 @@ public class RailNetwork {
                         return hops;
                     }
 
+                    // handle cycle
                     if (visited.add(neighbor)) {
                         queue.offer(neighbor);
                     }
