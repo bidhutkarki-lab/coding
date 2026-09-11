@@ -30,10 +30,11 @@ public class Main {
         System.out.println(MAPPER.writeValueAsString(bootstrap_api(input)));
     }
 }
+```
 
 Uses Jackson (jackson-databind). The entire payment body is preserved, including any additional card fields. Status checks are omitted because the input guarantees 200.
 
-For a real HTTP implementation, fetch the user first, then call payment and address services concurrently using the returned customerId.
+For a real HTTP implementation, fetch the user first, then call payment and address services *concurrently* using the returned customerId.
 
 *HTTP 500:* Treat it as an upstream failure. If UserService fails, stop because both remaining calls require its customer ID. Return an appropriate gateway error, typically 502.
 *Timeouts:* Set connection and request timeouts, plus an overall bootstrap deadline. Return 504 when a required dependency times out.
