@@ -1,4 +1,7 @@
-```
+# Bootstrap API
+
+```java
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -34,11 +37,22 @@ public class Main {
 
 Uses Jackson (jackson-databind). The entire payment body is preserved, including any additional card fields. Status checks are omitted because the input guarantees 200.
 
-For a real HTTP implementation, fetch the user first, then call payment and address services *concurrently* using the returned customerId.
+For a real HTTP implementation, fetch the user first, then call payment and address services **concurrently** using the returned customerId.
 
-*HTTP 500:* Treat it as an upstream failure. If UserService fails, stop because both remaining calls require its customer ID. Return an appropriate gateway error, typically 502.
-*Timeouts:* Set connection and request timeouts, plus an overall bootstrap deadline. Return 504 when a required dependency times out.
-*Exceptions:* Handle network failures, invalid JSON, and missing required fields explicitly. Return sanitized errors without exposing internal details.
-*Retries:* Retry transient failures for safe, idempotent requests with bounded exponential backoff and jitter. Keep retries within the overall deadline; avoid retrying validation failures.
-*Graceful degradation and partial responses:* If the product allows it, return 200 with available data, null for failed optional sections, and explicit error metadata. Distinguish unavailable data from a customer who simply has no card or address. If all sections are required, fail the request instead.
-*Observability:* Use correlation IDs and distributed tracing. Track per-service latency, errors, timeouts, retries, and partial-response rates. Avoid logging card details or addresses.
+**HTTP 500:** Treat it as an upstream failure. If UserService fails, stop because both remaining calls require its customer ID. Return an appropriate gateway error, typically 502.
+
+**Timeouts:** Set connection and request timeouts, plus an overall bootstrap deadline. Return 504 when a required dependency times out.
+
+**Circuit breaker:** After repeated failures, temporarily stop calling the unhealthy service and fail fast or return partial data. After a cooldown, allow a few trial requests to check recovery.
+
+**Exponential backoff with jitter:** Increase the delay between retries, for example 100 ms → 200 ms → 400 ms, plus random variation so clients don’t retry together. Limit attempts and stay within the overall deadline.
+
+**Bulkhead isolation:** Give payment and address calls separate concurrency limits so a slow payment service cannot consume all resources and block address requests.
+
+**Exceptions:** Handle network failures, invalid JSON, and missing required fields explicitly. Return sanitized errors without exposing internal details.
+
+**Retries:** Retry transient failures for safe, idempotent requests with bounded exponential backoff and jitter. Keep retries within the overall deadline; avoid retrying validation failures. Use **Resilence4J**
+
+**Graceful degradation and partial responses:** If the product allows it, return 200 with available data, null for failed optional sections, and explicit error metadata. Distinguish unavailable data from a customer who simply has no card or address. If all sections are required, fail the request instead.
+
+**Observability:** Use correlation IDs and distributed tracing. Track per-service latency, errors, timeouts, retries, and partial-response rates. Avoid logging card details or addresses.
