@@ -6,8 +6,7 @@ public class TennisSet {
     private final Map<Player, Integer> games = new EnumMap<>(Player.class);
 
     private Game currentGame;
-    private TiebreakGame currentTiebreak;
-    private boolean tiebreakActive = false;
+    private TiebreakGame currentTiebreak; // null unless a tiebreak is in progress
     private Player winner;
 
     public TennisSet() {
@@ -21,13 +20,13 @@ public class TennisSet {
             throw new IllegalStateException("Set is already complete");
         }
 
-        if(tiebreakActive) {
+        if(isTiebreakActive()) {
             currentTiebreak.recordPoint(player);
             Player tiebreakWinner = currentTiebreak.getWinner();
             if(tiebreakWinner != null) {
                 addGameWin(tiebreakWinner);
                 winner = tiebreakWinner;
-                tiebreakActive = false;
+                currentTiebreak = null;
             }
             return;
         }
@@ -40,13 +39,12 @@ public class TennisSet {
 
         // game is complete
         addGameWin(gameWinner);
-        int a = games.get(Player.A);
-        int b = games.get(Player.B);
+        int g1 = games.get(Player.A);
+        int g2 = games.get(Player.B);
 
         if(hasSetWon()) {
-            winner = a > b ? Player.A : Player.B;
-        } else if(a == 6 && b == 6) {
-            tiebreakActive = true;
+            winner = g1 > g2 ? Player.A : Player.B;
+        } else if(g1 == 6 && g2 == 6) {
             currentTiebreak = new TiebreakGame();
         } else {
             currentGame = new Game();
@@ -58,15 +56,20 @@ public class TennisSet {
         return games.get(player);
     }
 
-    public void addGameWin(Player player) {
+    /** Total games completed in this set by both players; a finished tiebreak counts as one. */
+    public int getGamesPlayed() {
+        return games.get(Player.A) + games.get(Player.B);
+    }
+
+    private void addGameWin(Player player) {
         games.merge(player, 1, Integer::sum);
     }
 
     private boolean hasSetWon() {
-        int gamesA = games.get(Player.A);
-        int gamesB = games.get(Player.B);
-        return Math.max(gamesA, gamesB) >= 6
-                && Math.abs(gamesA - gamesB) >= 2;
+        int g1 = games.get(Player.A);
+        int g2 = games.get(Player.B);
+        return Math.max(g1, g2) >= 6
+                && Math.abs(g1 - g2) >= 2;
     }
 
     public Player getWinner() {
@@ -74,7 +77,7 @@ public class TennisSet {
     }
 
     public boolean isTiebreakActive() {
-        return tiebreakActive;
+        return currentTiebreak != null;
     }
 
     public String getGamesScore() {
@@ -83,7 +86,7 @@ public class TennisSet {
 
     public String getScore() {
         if(winner != null) {
-            return "Set:" + getGamesScore() + ", winner " + winner;
+            return "Set: " + getGamesScore() + ", winner " + winner;
         }
 
         if(isTiebreakActive()) {
@@ -97,6 +100,6 @@ public class TennisSet {
 
     // Points played so far in the active tiebreak, 0 if no tiebreak is active
     public int getTiebreakPointsPlayed() {
-        return tiebreakActive ? currentTiebreak.getTotalPoints() : 0;
+        return isTiebreakActive() ? currentTiebreak.getTotalPoints() : 0;
     }
 }

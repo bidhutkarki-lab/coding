@@ -1,5 +1,4 @@
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 
 public class Game {
 
@@ -13,6 +12,8 @@ public class Game {
     }
 
     public void recordPoint(Player player) {
+        Objects.requireNonNull(player, "Player is required");
+
         if(getWinner() != null) {
             throw new IllegalStateException("Game is already over");
         }
@@ -21,14 +22,14 @@ public class Game {
     }
 
     public Player getWinner() {
-        int a = points.get(Player.A);
-        int b = points.get(Player.B);
+        int p1 = points.get(Player.A);
+        int p2 = points.get(Player.B);
 
-        if(a >=4 && a - b >= 2) {
+        if(p1 >=4 && p1 - p2 >= 2) {
             return Player.A;
         }
 
-        if(b >= 4 && b - a >= 2) {
+        if(p2 >= 4 && p2 - p1 >= 2) {
             return Player.B;
         }
 
@@ -42,21 +43,17 @@ public class Game {
             return "winner " + winner;
         }
 
-        int a = points.get(Player.A);
-        int b = points.get(Player.B);
+        int p1 = points.get(Player.A);
+        int p2 = points.get(Player.B);
 
-        if(a >= 3 && b >= 3) {
-            if(a == b) {
+        if(p1 >= 3 && p2 >= 3) {
+            if(p1 == p2) {
                 return "deuce";
             }
-            return "advantage " + (a > b ? Player.A : Player.B);
+            return "advantage " + (p1 > p2 ? Player.A : Player.B);
         }
 
-        return LABELS[a] + "-" + LABELS[b];
-    }
-
-    public int getTotalPoints() {
-        return points.get(Player.A) + points.get(Player.B);
+        return LABELS[p1] + "-" + LABELS[p2];
     }
 
 }

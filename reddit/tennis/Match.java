@@ -7,7 +7,7 @@ public class Match {
     private final Map<Player, Integer> setsWon = new EnumMap<>(Player.class);
 
     private TennisSet currentSet;
-    private final List<int[]> completedSetGames = new ArrayList<>();
+    private final List<TennisSet> completedSets = new ArrayList<>();
 
     private Player winner = null;
 
@@ -44,12 +44,12 @@ public class Match {
             throw new IllegalStateException("Match is already complete");
         }
 
-        int gamesBefore = gamesPlayed(currentSet);
+        int gamesBefore = currentSet.getGamesPlayed();
 
         currentSet.recordPoint(player);
         pointHistory.add(player);
 
-        int gamesAfter = gamesPlayed(currentSet);
+        int gamesAfter = currentSet.getGamesPlayed();
 
         if(gamesAfter > gamesBefore) {
             // when a game is complete
@@ -67,10 +67,7 @@ public class Match {
         // set is complete
         setsWon.merge(setWinner, 1, Integer::sum);
 
-        // store all games won record in this set
-        int gamesA = currentSet.getGamesWon(Player.A);
-        int gamesB = currentSet.getGamesWon(Player.B);
-        completedSetGames.add(new int[] { gamesA, gamesB});
+        completedSets.add(currentSet);
 
         if(hasWonMatch(setWinner)) {
             winner = setWinner;
@@ -101,8 +98,8 @@ public class Match {
 
     public List<String> getCompletedSetScores() {
         List<String> scores = new ArrayList<>();
-        for(int[] g : completedSetGames) {
-            scores.add(g[0] + "-" + g[1]);
+        for(TennisSet set : completedSets) {
+            scores.add(set.getGamesScore());
         }
         return scores;
     }
@@ -153,12 +150,12 @@ public class Match {
         return (pairIndex % 2 == 0) ? gameServer.opponent() : gameServer;
     }
 
-    public int totalCompletedGamesInMatch() {
+    private int totalCompletedGamesInMatch() {
         int sum = 0;
-        for(int[] g : completedSetGames) {
-            sum += g[0] + g[1];
+        for(TennisSet set : completedSets) {
+            sum += set.getGamesPlayed();
         }
-        sum += gamesPlayed(currentSet);
+        sum += currentSet.getGamesPlayed();
         return sum;
     }
 
@@ -180,9 +177,5 @@ public class Match {
             replay.recordPoint(pointHistory.get(i));
         }
         return replay.getState();
-    }
-
-    private static int gamesPlayed(TennisSet set) {
-        return set.getGamesWon(Player.A) + set.getGamesWon(Player.B);
     }
 }
