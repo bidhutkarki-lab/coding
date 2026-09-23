@@ -4,7 +4,7 @@ public class TennisSetTest {
         TennisSet normal = new TennisSet();
         reachFiveFour(normal);
 
-        winGame(normal, Player.A);
+        check(winGame(normal, Player.A), Player.A);
 
         check(normal.getGamesScore(), "6-4");
         check(normal.getWinner(), Player.A);
@@ -17,14 +17,14 @@ public class TennisSetTest {
         winGame(extended, Player.A); // 6-5
 
         check(extended.getWinner(), null);
-        check(extended.isTieBreakActive(), false);
+        check(extended.isTiebreakActive(), false);
 
-        winGame(extended, Player.A); // 7-5
+        check(winGame(extended, Player.A), Player.A); // 7-5
 
         check(extended.getGamesScore(), "7-5");
         check(extended.getWinner(), Player.A);
 
-        // At 6-6, start a TieBreak.
+        // At 6-6, start a Tiebreak.
         TennisSet tied = new TennisSet();
 
         for (int i = 0; i < 6; i++) {
@@ -33,9 +33,9 @@ public class TennisSetTest {
         }
 
         check(tied.getGamesScore(), "6-6");
-        check(tied.isTieBreakActive(), true);
+        check(tied.isTiebreakActive(), true);
 
-        // TieBreak reaches 6-6.
+        // Tiebreak reaches 6-6.
         for (int i = 0; i < 6; i++) {
             tied.recordPoint(Player.A);
             tied.recordPoint(Player.B);
@@ -47,7 +47,7 @@ public class TennisSetTest {
         tied.recordPoint(Player.A); // 8-6: A wins
         check(tied.getGamesScore(), "7-6");
         check(tied.getWinner(), Player.A);
-        check(tied.isTieBreakActive(), false);
+        check(tied.isTiebreakActive(), false);
 
         try {
             tied.recordPoint(Player.B);
@@ -67,10 +67,12 @@ public class TennisSetTest {
         winGame(set, Player.A);
     }
 
-    private static void winGame(TennisSet set, Player player) {
+    private static Player winGame(TennisSet set, Player player) {
         for (int i = 0; i < 4; i++) {
             set.recordPoint(player);
         }
+
+        return set.getWinner();
     }
 
     private static void check(Object actual, Object expected) {

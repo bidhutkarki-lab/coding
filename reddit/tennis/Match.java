@@ -4,57 +4,87 @@ public class Match {
     private final int bestOf;
     private final int setsNeeded;
 
-    private int setsA;
-    private int setsB;
+    private final Map<Player, Integer> setsWon = new EnumMap<>(Player.class);
 
-    private TennisSet currentSet = new TennisSet();
-    private final List<String> completedSetScores = new ArrayList<>();
+    private TennisSet currentSet;
+    private final List<int[]> completedSetGames = new ArrayList<>();
 
-    private Player winner;
+    private Player winner = null;
+
+    private final Player firstServer;
+
+    private final List<Player> pointHistory = new ArrayList<>();
+
+    private final SideTracker sides = new SideTracker(Side.NEAR);
 
     public Match(int bestOf) {
+        this(bestOf, Player.A);
+    }
+
+    public Match(int bestOf, Player firstServer) {
 
         if(bestOf != 3 && bestOf != 5) {
             throw new IllegalArgumentException("Best of must be 3 or 5");
         }
 
+        if(firstServer == null) {
+            throw new IllegalArgumentException("First server is required");
+        }
+
         this.bestOf = bestOf;
         this.setsNeeded = bestOf / 2 + 1;
+        setsWon.put(Player.A, 0);
+        setsWon.put(Player.B, 0);
+        this.currentSet = new TennisSet();
+        this.firstServer = firstServer;
     }
 
     public void recordPoint(Player player) {
-        if(player == null) {
-            throw new IllegalArugmentException("Player is required");
-        }
-
-        if(isComplete()) {
+        if(winner != null) {
             throw new IllegalStateException("Match is already complete");
         }
 
+        int gamesBefore = gamesPlayed(currentSet);
+
         currentSet.recordPoint(player);
+        pointHistory.add(player);
+
+        int gamesAfter = gamesPlayed(currentSet);
+
+        if(gamesAfter > gamesBefore) {
+            // when a game is complete
+            sides.onGameCompleted(gamesAfter);
+        } else if(currentSet.isTiebreakActive()) {
+            sides.onTiebreakPointPlayed(currentSet.getTiebreakPointsPlayed());
+        }
+
 
         Player setWinner = currentSet.getWinner();
         if(setWinner == null) {
             return;
         }
 
-        completedSetScores.add(currentSet.getGamesScore());
+        // set is complete
+        setsWon.merge(setWinner, 1, Integer::sum);
 
-        if(setWinner == Player.A) {
-            setsA++;
+        // store all games won record in this set
+        int gamesA = currentSet.getGamesWon(Player.A);
+        int gamesB = currentSet.getGamesWon(Player.B);
+        completedSetGames.add(new int[] { gamesA, gamesB});
+
+        if(hasWonMatch(setWinner)) {
+            winner = setWinner;
         } else {
-            setsB++;
-        }
-
-        if(setsA == setsNeeded) {
-            winner = Player.A;
-        } else if(setsB == setsNeeded) {
-            winner = Player.B;
-        }
-
-        if(!isComplete()) {
             currentSet = new TennisSet();
         }
+    }
+
+    private boolean hasWonMatch(Player player) {
+        return setsWon.get(player) == setsNeeded;
+    }
+
+    public Side getSide(Player player) {
+        return sides.sideOf(player);
     }
 
     public boolean isComplete() {
@@ -66,21 +96,93 @@ public class Match {
     }
 
     public String getSetsScore() {
-        return setsA + "-" + setsB;
+        return setsWon.get(Player.A) + "-" + setsWon.get(Player.B);
     }
 
     public List<String> getCompletedSetScores() {
-        // prevent callers from modifying the match's internal list
-        return List.copyOf(completedSetScores);
+        List<String> scores = new ArrayList<>();
+        for(int[] g : completedSetGames) {
+            scores.add(g[0] + "-" + g[1]);
+        }
+        return scores;
     }
 
     public String getState() {
-        String state = "Best of " + bestOf + ", sets: " + getSetsScore() + ", completed sets: " + completedSetScores;
+        String state = "Best of " + bestOf + ", sets: " + getSetsScore() + ", completed sets: " + getCompletedSetScores();
 
         if(isComplete()) {
             return state + ", winner " + winner;
         }
 
         return state + ", current " + currentSet.getScore();
+    }
+
+    /**
+     * Regular games: serve alternates every game across the whole match
+     * Tiebreak: the player due to serve takes point 1, then players alternate every 2 points (2-3, 4-5, ...).
+     * After a tiebreak: it counts as one game, so the player who received first in it serves the next set.
+     */
+    public Player getCurrentServer() {
+        if(isComplete()) {
+            throw new IllegalStateException("Game is over");
+        }
+        Player gameServer = (totalCompletedGamesInMatch() % 2 == 0 ? firstServer : firstServer.opponent());
+
+        int tiebreakPoints = currentSet.getTiebreakPointsPlayed();
+        if(tiebreakPoints == 0) {
+            return gameServer;
+        }
+
+        // Tiebreak serving order (S = gameServer, O = opponent):
+        //   point #:  1 | 2  3 | 4  5 | 6  7 | 8  9 ...
+        //   server:   S | O  O | S  S | O  O | S  S ...
+        // Point 1 is a lone serve; after that, serve changes every 2 points.
+        //
+        // tiebreakPoints = points already played, so we're picking the server of point (tiebreakPoints + 1).
+        //   - 1 : drop the lone first point so the rest line up in pairs
+        //   / 2 : number the pairs 0, 1, 2, ... (even pair -> O, odd pair -> S)
+        //
+        //   played | next point | (played-1)/2 | server
+        //     1    |     2      |      0       |   O
+        //     2    |     3      |      0       |   O
+        //     3    |     4      |      1       |   S
+        //     4    |     5      |      1       |   S
+        //     5    |     6      |      2       |   O
+        // (played == 0 -> point 1 -> S, handled by the early return above.)
+        int pairIndex = (tiebreakPoints - 1) / 2;
+        return (pairIndex % 2 == 0) ? gameServer.opponent() : gameServer;
+    }
+
+    public int totalCompletedGamesInMatch() {
+        int sum = 0;
+        for(int[] g : completedSetGames) {
+            sum += g[0] + g[1];
+        }
+        sum += gamesPlayed(currentSet);
+        return sum;
+    }
+
+
+    public int getPointsPlayed() {
+        return pointHistory.size();
+    }
+
+    /** Point 0 is the initial state; point n is the state right after the nth point */
+    public String getStateAfterPoint(int point) {
+        if(point < 0 || point > pointHistory.size()) {
+            throw new IllegalArgumentException("Points must be between 0 and " + getPointsPlayed());
+        }
+
+        // Replay takes time,
+        // you can use snapshot of getState() in a hashmap, tradeoff: just keeps one string format
+        Match replay = new Match(bestOf, firstServer);
+        for(int i=0; i<point; i++) {
+            replay.recordPoint(pointHistory.get(i));
+        }
+        return replay.getState();
+    }
+
+    private static int gamesPlayed(TennisSet set) {
+        return set.getGamesWon(Player.A) + set.getGamesWon(Player.B);
     }
 }

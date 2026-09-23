@@ -1,32 +1,34 @@
+import java.util.EnumMap;
+import java.util.Map;
+
 public class Game {
 
     private static final String[] LABELS = {"0", "15", "30", "40"};
 
-    private int pointsA;
-    private int pointsB;
+    private final Map<Player, Integer> points = new EnumMap<>(Player.class);
+
+    public Game() {
+        points.put(Player.A, 0);
+        points.put(Player.B, 0);
+    }
 
     public void recordPoint(Player player) {
-        if(player == null) {
-            throw new IllegalArgumentException("Player is required");
-        }
-
         if(getWinner() != null) {
             throw new IllegalStateException("Game is already over");
         }
 
-        if(player == Player.A) {
-            pointsA++;
-        } else {
-            pointsB++;
-        }
+        points.merge(player, 1, Integer::sum);
     }
 
     public Player getWinner() {
-        if(pointsA >=4 && pointsA - pointsB >= 2) {
+        int a = points.get(Player.A);
+        int b = points.get(Player.B);
+
+        if(a >=4 && a - b >= 2) {
             return Player.A;
         }
 
-        if(pointsB >= 4 && pointsB - pointsA >= 2) {
+        if(b >= 4 && b - a >= 2) {
             return Player.B;
         }
 
@@ -40,14 +42,21 @@ public class Game {
             return "winner " + winner;
         }
 
-        if(pointsA >= 3 && pointsB >= 3) {
-            if(pointsA == pointsB) {
+        int a = points.get(Player.A);
+        int b = points.get(Player.B);
+
+        if(a >= 3 && b >= 3) {
+            if(a == b) {
                 return "deuce";
             }
-            return "advantage " + (pointsA > pointsB ? Player.A : Player.B);
+            return "advantage " + (a > b ? Player.A : Player.B);
         }
 
-        return LABELS[pointsA] + "-" + LABELS[pointsB];
+        return LABELS[a] + "-" + LABELS[b];
+    }
+
+    public int getTotalPoints() {
+        return points.get(Player.A) + points.get(Player.B);
     }
 
 }

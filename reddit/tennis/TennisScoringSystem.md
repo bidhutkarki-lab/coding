@@ -15,11 +15,11 @@ Clarify these points with the interviewer:
 
 * Should score methods return numeric counts, formatted strings, or both?
 * Should recording a point after completion raise an error?
-* Does every set, including the final set, use a tiebreak at 6–6?
-* Is a tiebreak played to 7 points, with a two-point lead required?
+* Does every set, including the final set, use a Tiebreak at 6–6?
+* Is a Tiebreak played to 7 points, with a two-point lead required?
 * Are serving order, side changes, or score history required?
 
-For the requirements below, assume every set uses a tiebreak at 6–6.
+For the requirements below, assume every set uses a Tiebreak at 6–6.
 
 ---
 
@@ -85,7 +85,7 @@ Implement a `TennisSet` class that tracks games.
 * Each completed game adds one game win to its winner.
 * Start a new game if the set is still ongoing.
 * A player wins the set by winning at least 6 games with a lead of at least 2 games.
-* At **6–6**, start a tiebreak.
+* At **6–6**, start a Tiebreak.
 
 Examples:
 
@@ -94,13 +94,13 @@ Examples:
 | 6–4        | A wins the set   |
 | 6–5        | Continue playing |
 | 7–5        | A wins the set   |
-| 6–6        | Start a tiebreak |
+| 6–6        | Start a Tiebreak |
 
 ### Tiebreak Rules
 
 * Points are displayed as ordinary numbers: `0, 1, 2, 3, ...`.
 * The first player to reach at least 7 points with a lead of at least 2 wins.
-* The tiebreak winner wins the set **7–6**.
+* The Tiebreak winner wins the set **7–6**.
 
 Examples:
 
@@ -116,8 +116,8 @@ Examples:
 Expose:
 
 * Games won by each player.
-* Current game or tiebreak score.
-* Whether a tiebreak is active.
+* Current game or Tiebreak score.
+* Whether a Tiebreak is active.
 * Set winner, if decided.
 
 ## Phase 3: Best-of-N Match
@@ -154,7 +154,7 @@ Expose:
 * Sets won by each player.
 * Scores of completed sets.
 * Games won in the current set.
-* Current game or tiebreak score.
+* Current game or Tiebreak score.
 * Match winner, if decided.
 
 Example:
@@ -192,8 +192,8 @@ Also write tests that assert the expected state.
 * Deuce → advantage → game.
 * A set ends at 6–4.
 * A set continues at 6–5 and ends at 7–5.
-* A tiebreak begins at 6–6.
-* A tiebreak continues at 7–6 and ends at 8–6.
+* A Tiebreak begins at 6–6.
+* A Tiebreak continues at 7–6 and ends at 8–6.
 * A best-of-three match ends after 2 set wins.
 * A best-of-five match ends after 3 set wins.
 * A point recorded after match completion is rejected.
@@ -206,7 +206,7 @@ The interviewer may request one or more extensions.
 
 Track the current server.
 
-Clarify the serving rules for regular games, tiebreaks, and the game after a tiebreak.
+Clarify the serving rules for regular games, Tiebreaks, and the game after a Tiebreak.
 
 ### Option B: Score History
 
@@ -226,7 +226,7 @@ Track which side each player occupies.
 
 For the basic extension, players switch sides after odd-numbered games: `1, 3, 5, ...`.
 
-Clarify side changes during tiebreaks and across set boundaries. Keep this metadata separate from point scoring.
+Clarify side changes during Tiebreaks and across set boundaries. Keep this metadata separate from point scoring.
 
 ### Option D: Match Format Abstraction
 
@@ -240,10 +240,10 @@ A constructor parameter is sufficient unless the interviewer specifically reques
 | -------------- | -------------------------------------------------------- |
 | `Game`         | Regular point scoring, deuce, advantage, and game winner |
 | `TiebreakGame` | Numeric points and first-to-7, win-by-2 scoring          |
-| `TennisSet`    | Game wins, tiebreak transition, and set winner           |
+| `TennisSet`    | Game wins, Tiebreak transition, and set winner           |
 | `Match`        | Set wins, match format, and match winner                 |
 
-Regular games and tiebreaks can share a scoring interface.
+Regular games and Tiebreaks can share a scoring interface.
 
 Store numeric points and derive displayed scores when requested. Avoid storing numeric and displayed scores as separate mutable state.
 

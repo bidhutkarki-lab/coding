@@ -39,6 +39,7 @@ public class GameTest {
         Game straightWin = new Game();
         for (int i = 0; i < 4; i++) {
             straightWin.recordPoint(Player.A);
+            check(straightWin.getWinner(), i == 3 ? Player.A : null);
         }
         check(straightWin.getWinner(), Player.A);
 
