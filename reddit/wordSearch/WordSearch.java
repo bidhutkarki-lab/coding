@@ -6,7 +6,7 @@ Start from every cell with word index 0.
 Current cell is visited now. Search on all the direction for a matching next character.
 Make that cell unvisited again after search from there is complete (backtracking).
 
-Time: O(R × C × 3ᴸ) — try every cell, with at most 3 onward choices after the first move.
+Time: O(R × C × 3ᴸ) — try every cell, after the first step each cell has at most 3 unvisited neighbors.
 Space: O(L) — recursion stack.
 
 */
@@ -28,7 +28,7 @@ class WordSearch {
         return false;
     }
 
-    public boolean dfs(char[][] board, String word, int row, int col, int index) {
+    private boolean dfs(char[][] board, String word, int row, int col, int index) {
         if(row < 0 || row >= rows || col < 0 || col >= cols || board[row][col] != word.charAt(index)) {
             return false;
         }

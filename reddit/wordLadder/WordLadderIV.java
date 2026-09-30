@@ -1,3 +1,6 @@
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Validate Word Ladder Problem
@@ -18,16 +21,17 @@ public class WordLadderIV {
             return false;
         }
 
-        Set<String> seen = HashSet<>();
+        Set<String> seen = new HashSet<>();
+        seen.add(words.get(0));
 
-        for(int i=0; i<words.size(); i++) {
+        for(int i=1; i<words.size(); i++) {
             String current = words.get(i);
 
             if(!seen.add(current)) {
                 return false;
             }
 
-            if(i > 0 && !differsByOne(words.get(i-1), current)) {
+            if(!differsByOne(words.get(i-1), current)) {
                 return false;
             }
         }
@@ -40,7 +44,7 @@ public class WordLadderIV {
         }
 
         int differences = 0;
-        if(int i=0; i<first.length(); i++) {
+        for(int i=0; i<first.length(); i++) {
             if(first.charAt(i) != second.charAt(i)) {
                 differences++;
             }

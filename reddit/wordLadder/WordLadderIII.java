@@ -1,3 +1,5 @@
+import java.util.*;
+
 /**
  * Use BFS.
  * Compare the current word against unvisited dictionary words.
@@ -9,8 +11,8 @@
  * Time: O(N²L). Space: O(N).
  * Up to N words processed, each scanning N candidates and comparing L characters
  * while: processes up to N words from the queue.
- * iterator: scans up to N remaining words for each processed word.
- * canTransform(): compares up to L characters per pair.
+ * iterator: scans up to N unvisisted words for each processed word.
+ * differsByTwo(): compares up to L characters per pair.
  */
 public class WordLadderIII {
 
@@ -19,9 +21,18 @@ public class WordLadderIII {
             return List.of(beginWord);
         }
 
-        Set<String> remaining = new HashSet<>(wordList);
-        remaining.remove(beginWord);
-        remaining.remove(endWord);
+        if(beginWord.length() != endWord.length()) {
+            return Collections.emptyList();
+        }
+
+        Set<String> unvisited = new HashSet<>();
+        for(String word : wordList) {
+            if(word.length() == beginWord.length()) {
+                unvisited.add(word);
+            }
+        }
+        unvisited.remove(beginWord);
+        unvisited.remove(endWord);
 
         Queue<String> queue = new ArrayDeque<>();
         Map<String, String> parent = new HashMap<>();
@@ -35,7 +46,7 @@ public class WordLadderIII {
                 return buildPath(endWord, parent);
             }
 
-            Iterator<String> iterator = remaning.iterator();
+            Iterator<String> iterator = unvisited.iterator();
 
             while(iterator.hasNext()) {
                 String candidate = iterator.next();
@@ -76,6 +87,5 @@ public class WordLadderIII {
 
         return path;
     }
-
 
 }

@@ -1,3 +1,5 @@
+import java.util.*;
+
 /**
 Use BFS from beginWord,
 try changing each character to find unvisited dictionary words,
@@ -9,13 +11,14 @@ L = length of each word.
 Time: O(N × L²)
 Space: O(N × L)
 **/
-public class Solution {
+public class WordLadder {
 
     public int ladderLength(String beginWord, String endWord, List<String> wordList) {
 
-        Set<String> wordSet = new HashSet<>(wordList);
+        Set<String> unvisited = new HashSet<>(wordList);
 
-        if(!wordSet.contains(endWord)) {
+        // do not allow when endWord is not in dictonary
+        if(!unvisited.contains(endWord)) {
             return 0;
         }
 
@@ -32,8 +35,8 @@ public class Solution {
                     return level;
                 }
 
-                for(String neighbor : getNeighbors(word, wordSet)) {
-                    wordSet.remove(neighbor);
+                for(String neighbor : getNeighbors(word, unvisited)) {
+                    unvisited.remove(neighbor);
                     queue.add(neighbor);
                 }
             }
@@ -42,7 +45,7 @@ public class Solution {
         return 0;
     }
 
-    private List<String> getNeighbors(String word, Set<String> wordSet) {
+    private List<String> getNeighbors(String word, Set<String> unvisited) {
         List<String> result = new ArrayList<>();
 
         char[] chars = word.toCharArray();
@@ -53,7 +56,7 @@ public class Solution {
                 chars[i] = ch;
 
                 String newWord = new String(chars);
-                if(wordSet.contains(newWord)) {
+                if(unvisited.contains(newWord)) {
                     result.add(newWord);
                 }
             }
