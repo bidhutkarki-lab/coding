@@ -1,4 +1,4 @@
 public class Message {
-    int id,;
+    int id;
     String content;
 }

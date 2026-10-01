@@ -3,11 +3,13 @@
  * Use Min heap for sorting by timestamp and then chatIndex
  *
  * Add the first item (Message) of all the chats to heap (which will be sorted)
- * Pop the smallest item from the heap (add that to the result), then add another item from the same chat.
+ * Pop the smallest item from the heap (add that to the result if not seen before), then add another item from the same chat.
  *
- * Time: O(k + Nlog(K)) - k is the number of chats, N is number of messages
- * Space: O(K) + O(N), K for heap and N for returned result
+ * Time: O(N log K) - K is the number of chats, N is number of messages (including duplicates)
+ * Space: O(K) for heap + O(R) for seen set, R is number of unique messages (output is O(R))
  */
+import java.util.*;
+
 public class MergeMessage {
     public record Message (
         String messageId,
@@ -38,6 +40,7 @@ public class MergeMessage {
             }
 
             List<String> result = new ArrayList<>();
+            Set<String> seen = new HashSet<>();
 
             while(!heap.isEmpty()) {
                 // pop the smallest message
@@ -51,8 +54,11 @@ public class MergeMessage {
                     heap.offer(new Entry(chat.get(nextIndex), smallest.chatIndex(), nextIndex));
                 }
 
-                // add smallest to the result
-                result.add(smallest.message().messageId());
+                // add smallest to the result, skipping duplicates by messageId
+                String id = smallest.message().messageId();
+                if (seen.add(id)) {
+                    result.add(id);
+                }
             }
 
             return result;
