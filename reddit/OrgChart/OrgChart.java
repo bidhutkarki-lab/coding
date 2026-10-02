@@ -50,45 +50,11 @@ public class OrgChart {
     private final String root;
 
     public OrgChart(List<List<String>> relations) {
-
-        Set<String> hasManager = new HashSet<>();
-
-        for(List<String> row : relations) {
-            String manager = row.get(0);
-            children.computeIfAbsent(manager, key -> new ArrayList<>());
-
-            for(int i=1; i<row.size(); i++) {
-                String report = row.get(i);
-
-                children.get(manager).add(report);
-                parent.put(report, manager);
-                children.computeIfAbsent(report, key-> new ArrayList<>());
-                hasManager.add(report);
-            }
-        }
-
-        String rootCandidate = null;
-
-        for(String employee : children.keySet()) {
-            if(!hasManager.contains(employee)) {
-                if(rootCandidate != null) {
-                    throw new IllegalArgumentException("Multiple roots found");
-                }
-                rootCandidate = employee;
-            }
-        }
-
-        if(rootCandidate == null) {
-            throw new IllegalArgumentException("No root found");
-        }
-
-        root = rootCandidate;
-    }
-
-    public OrgChat(List<List<String>> relations) {
         if (relations == null || relations.isEmpty()) {
             throw new IllegalArgumentException("Input cannot be empty");
         }
+
+        Set<String> managersSeen = new HashSet<>();
 
         for(List<String> row : relations) {
             if(row == null || row.isEmpty()) {
@@ -103,7 +69,7 @@ public class OrgChart {
 
             String manager = row.get(0);
             if(!managersSeen.add(manager)) {
-                "Repeated manager row: " + manager
+                throw new IllegalArgumentException("Repeated manager row: " + manager);
             }
 
             children.computeIfAbsent(manager, key -> new ArrayList<>());
@@ -121,7 +87,7 @@ public class OrgChart {
                 }
 
                 if(parent.containsKey(report)) {
-                    throw new IllegalAgurmentException("Employee has multiple managers: " + report);
+                    throw new IllegalArgumentException("Employee has multiple managers: " + report);
                 }
 
                 parent.put(report, manager);
@@ -276,7 +242,7 @@ public class OrgChart {
     // Alternate version 2
     public Optional<String> lowestStrictCommonManager(String e1, String e2) {
         if(!children.containsKey(e1) || !children.containsKey(e2)) {
-            throw new IllegalAgurmentException("Unknown employee");
+            throw new IllegalArgumentException("Unknown employee");
         }
 
         Set<String> ancestors = new HashSet<>();
@@ -317,27 +283,35 @@ public class OrgChart {
         return false;
     }
 
-    public List<String> employessAtLevel(String manager, int levels) {
+    public List<String> employeesAtLevel(String manager, int levels) {
         if(!children.containsKey(manager)) {
             throw new IllegalArgumentException("Unknown manager: " + manager);
         }
         if(levels < 0) {
-            throw new IllegalAgurmentException("Levels cannot be negative");
+            throw new IllegalArgumentException("Levels cannot be negative");
         }
 
         Queue<String> queue = new ArrayDeque<>();
         queue.offer(manager);
 
-        for(int i = 0; i<levels && !queue.isEmpty(); i++) {
+        int depth = 0;
+
+        while(!queue.isEmpty()) {
+            if(depth == levels) {
+                break;
+            }
+
             int size = queue.size();
 
             for(int i=0; i<size; i++) {
-                String poll = queue.poll();
+                String employee = queue.poll();
 
                 for(String report : children.get(employee)) {
                     queue.offer(report);
                 }
             }
+
+            depth++;
         }
 
         return new ArrayList<>(queue);
