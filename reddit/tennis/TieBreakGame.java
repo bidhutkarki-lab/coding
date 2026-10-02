@@ -1,44 +1,25 @@
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 
 public class TiebreakGame {
-    private final Map<Player, Integer> points = new EnumMap<>(Player.class);
 
-    public TiebreakGame() {
-        points.put(Player.A, 0);
-        points.put(Player.B, 0);
-    }
+    private Score points = new Score();
 
     public void recordPoint(Player player) {
+
+        Objects.requireNonNull(player, "Player is required");
+
         if(getWinner() != null) {
-            throw new IllegalStateException("Tiebreak is already over");
+            throw new IllegalStateException("Tiebreak game is over");
         }
 
-        points.merge(player, 1, Integer::sum);
+        points.add(player);
     }
 
     public Player getWinner() {
-
-        int a = points.get(Player.A);
-        int b = points.get(Player.B);
-
-        if(a >=7 && a-b >= 2) {
-            return Player.A;
-        }
-
-        if(b >=7 && b - a >= 2) {
-            return Player.B;
-        }
-
-        return null;
+       return points.getWinnerByTwo(7);
     }
 
     public String getScore() {
-        return points.get(Player.A) + "-" + points.get(Player.B);
-    }
-
-    /** For managing the server. */
-    public int getTotalPoints() {
-        return points.get(Player.A) + points.get(Player.B);
+        return points.toString();
     }
 }

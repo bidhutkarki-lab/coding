@@ -1,32 +1,34 @@
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 
 public class TennisSet {
 
-    private final Map<Player, Integer> games = new EnumMap<>(Player.class);
+    private final Score gameScore = new Score();
 
     private Game currentGame;
-    private TiebreakGame currentTiebreak; // null unless a tiebreak is in progress
-    private Player winner;
+    private TiebreakGame currentTiebreakGame;
+
+    private final List<MatchListener> listeners = MatchListenerFactory.getListeners();
 
     public TennisSet() {
-        games.put(Player.A, 0);
-        games.put(Player.B, 0);
-        this.currentGame = new Game();
     }
 
     public void recordPoint(Player player) {
-        if(winner != null) {
-            throw new IllegalStateException("Set is already complete");
+
+        if(getWinner() != null) {
+            throw new IllegalStateException("Set has been already over");
         }
 
-        if(isTiebreakActive()) {
-            currentTiebreak.recordPoint(player);
-            Player tiebreakWinner = currentTiebreak.getWinner();
-            if(tiebreakWinner != null) {
-                addGameWin(tiebreakWinner);
-                winner = tiebreakWinner;
-                currentTiebreak = null;
+        if(currentTiebreakGame != null) {
+            // tie break is active, record it's point
+            currentTiebreakGame.recordPoint(player);
+            listeners.forEach(MatchListener::onTiebreakPointPlayed);
+            Player gameWinner = currentTiebreakGame.getWinner();
+            if(gameWinner != null) {
+                gameScore.add(gameWinner);
+                currentTiebreakGame = null;
+                listeners.forEach(MatchListener::onGameCompleted);
+                // winning the tiebreak always wins the set (7-6)
+                listeners.forEach(MatchListener::onSetCompleted);
             }
             return;
         }
@@ -37,69 +39,51 @@ public class TennisSet {
             return;
         }
 
-        // game is complete
-        addGameWin(gameWinner);
-        int g1 = games.get(Player.A);
-        int g2 = games.get(Player.B);
+        // game is complete at this point
+        gameScore.add(gameWinner);
+        listeners.forEach(MatchListener::onGameCompleted);
+        Player winner = getWinner();
+        if(winner != null) {
+            listeners.forEach(MatchListener::onSetCompleted);
+            return;
+        }
 
-        if(hasSetWon()) {
-            winner = g1 > g2 ? Player.A : Player.B;
-        } else if(g1 == 6 && g2 == 6) {
-            currentTiebreak = new TiebreakGame();
+        if(gameScore.get(Player.A) == 6 && gameScore.get(Player.B) == 6) {
+            currentTiebreakGame = new TiebreakGame();
         } else {
             currentGame = new Game();
         }
     }
 
-    /** Games won by the given player */
-    public int getGamesWon(Player player) {
-        return games.get(player);
-    }
-
-    /** Total games completed in this set by both players; a finished tiebreak counts as one. */
-    public int getGamesPlayed() {
-        return games.get(Player.A) + games.get(Player.B);
-    }
-
-    private void addGameWin(Player player) {
-        games.merge(player, 1, Integer::sum);
-    }
-
-    private boolean hasSetWon() {
-        int g1 = games.get(Player.A);
-        int g2 = games.get(Player.B);
-        return Math.max(g1, g2) >= 6
-                && Math.abs(g1 - g2) >= 2;
-    }
-
     public Player getWinner() {
-        return winner;
-    }
+        Player winner = gameScore.getWinnerByTwo(6);
+        if(winner != null) {
+            return winner;
+        }
 
-    public boolean isTiebreakActive() {
-        return currentTiebreak != null;
-    }
-
-    public String getGamesScore() {
-        return games.get(Player.A) + "-" + games.get(Player.B);
+        // special case for tiebreak winner
+        int g1 = gameScore.get(Player.A), g2 = gameScore.get(Player.B);
+        if(g1 ==7 && g2 == 6) {
+            return Player.A;
+        }
+        if(g2 == 7 && g1 == 6) {
+            return Player.B;
+        }
+        return null;
     }
 
     public String getScore() {
-        if(winner != null) {
-            return "Set: " + getGamesScore() + ", winner " + winner;
+        StringBuilder sb = new StringBuilder("Set: ").append(gameScore);
+
+        if (getWinner() != null) {
+            return sb.append(", winner: ").append(getWinner()).toString();
         }
 
-        if(isTiebreakActive()) {
-            return "Set: " + getGamesScore() + ", Tiebreak: " + currentTiebreak.getScore();
+        if (currentTiebreakGame != null) {
+            sb.append(", tiebreak: ").append(currentTiebreakGame.getScore());
+        } else {
+            sb.append(", game: ").append(currentGame.getScore());
         }
-
-        return "Set: " + getGamesScore() + ", game: " + currentGame.getScore();
-    }
-
-    // For managing serve
-
-    // Points played so far in the active tiebreak, 0 if no tiebreak is active
-    public int getTiebreakPointsPlayed() {
-        return isTiebreakActive() ? currentTiebreak.getTotalPoints() : 0;
+        return sb.toString();
     }
 }
